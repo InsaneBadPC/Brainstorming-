@@ -1,0 +1,8 @@
+{
+  "name": "MindCraft AI",
+  "description": "Interactive AI-powered brainstorming and mind mapping assistant with voice mode and real-time map co-creation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

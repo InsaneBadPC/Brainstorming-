@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["uid"]
+    },
+    "MindMap": {
+      "title": "MindMap",
+      "description": "Mind map metadata document",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "seedPrompt": { "type": "string" },
+        "createdAt": { "type": "integer" },
+        "updatedAt": { "type": "integer" }
+      },
+      "required": ["id", "userId", "title"]
+    },
+    "MindNode": {
+      "title": "MindNode",
+      "description": "Single mind map node",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "mapId": { "type": "string" },
+        "parentId": { "type": "string" },
+        "title": { "type": "string" },
+        "details": { "type": "string" },
+        "category": { "type": "string" },
+        "xPos": { "type": "number" },
+        "yPos": { "type": "number" },
+        "colorHex": { "type": "string" },
+        "isAiGenerated": { "type": "boolean" },
+        "authorPersona": { "type": "string" },
+        "diagramData": { "type": "string" },
+        "searchSources": { "type": "string" },
+        "checklistJson": { "type": "string" },
+        "wireframeMockup": { "type": "string" },
+        "clusterTag": { "type": "string" },
+        "roadmapPhase": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "isExpanded": { "type": "boolean" }
+      },
+      "required": ["id", "mapId", "title"]
+    },
+    "CustomPersona": {
+      "title": "CustomPersona",
+      "description": "User-defined AI Persona",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "title": { "type": "string" },
+        "roleDescription": { "type": "string" },
+        "colorHex": { "type": "string" },
+        "emoji": { "type": "string" },
+        "pitch": { "type": "number" },
+        "speechRate": { "type": "number" }
+      },
+      "required": ["id", "userId", "displayName", "roleDescription"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/users/{userId}/mind_maps/{mapId}": {
+      "schema": "MindMap",
+      "description": "User mind maps collection"
+    },
+    "/users/{userId}/mind_maps/{mapId}/nodes/{nodeId}": {
+      "schema": "MindNode",
+      "description": "Individual nodes within a mind map"
+    },
+    "/users/{userId}/custom_personas/{personaId}": {
+      "schema": "CustomPersona",
+      "description": "User custom AI personas"
+    }
+  }
+}
