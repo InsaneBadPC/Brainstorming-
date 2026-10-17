@@ -93,56 +93,21 @@ fun MindMapCanvasView(
 ) {
     val density = LocalDensity.current
 
-    BoxWithConstraints(
+    ZoomablePanContainer(
+        scale = scale,
+        panOffset = panOffset,
+        onZoomChange = onZoomChange,
+        onPanDelta = onPanDelta,
+        onCanvasTap = onCanvasTap,
+        onDoubleTap = { onResetZoom() },
+        minScale = 0.25f,
+        maxScale = 3.5f,
         modifier = modifier
             .fillMaxSize()
             .background(ObsidianBg)
-            // Gesture detector for two-finger pinch-to-zoom, single-finger pan, and canvas tap
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    var panTotal = Offset.Zero
-                    var hasTransformed = false
-                    val downTime = System.currentTimeMillis()
-
-                    do {
-                        val event = awaitPointerEvent()
-                        val pointerCount = event.changes.size
-
-                        if (pointerCount >= 2) {
-                            // Two-finger pinch-to-zoom & pan
-                            val zoomChange = event.calculateZoom()
-                            val panChange = event.calculatePan()
-                            val centroid = event.calculateCentroid()
-
-                            if (zoomChange != 1.0f || panChange != Offset.Zero) {
-                                hasTransformed = true
-                                onPanDelta(panChange)
-                                if (zoomChange != 1.0f) {
-                                    onZoomChange(zoomChange, centroid)
-                                }
-                                event.changes.forEach { it.consume() }
-                            }
-                        } else if (pointerCount == 1) {
-                            // Single finger drag to pan the canvas view
-                            val panChange = event.calculatePan()
-                            panTotal += panChange
-                            if (panTotal.getDistance() > 5f) {
-                                hasTransformed = true
-                                onPanDelta(panChange)
-                                event.changes.forEach { it.consume() }
-                            }
-                        }
-                    } while (event.changes.any { it.pressed })
-
-                    val duration = System.currentTimeMillis() - downTime
-                    if (!hasTransformed && panTotal.getDistance() < 5f && duration < 350) {
-                        onCanvasTap()
-                    }
-                }
-            }
             .testTag("mind_map_canvas")
     ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val canvasWidthPx = constraints.maxWidth.toFloat()
         val canvasHeightPx = constraints.maxHeight.toFloat()
         val centerX = canvasWidthPx / 2f
@@ -411,4 +376,5 @@ fun MindMapCanvasView(
             }
         }
     }
+}
 }

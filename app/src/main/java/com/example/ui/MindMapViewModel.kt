@@ -210,6 +210,75 @@ class MindMapViewModel(application: Application) : AndroidViewModel(application)
             delay(2000)
             checkForUpdates(isUserInitiated = false)
         }
+
+        // Auto-sync & load cloud maps when user logs in with Google
+        viewModelScope.launch {
+            currentUser.collect { user ->
+                if (user != null) {
+                    loadCloudMaps()
+                    val mapId = _currentMapId.value
+                    if (mapId != null) {
+                        attachLiveCloudListener(mapId)
+                    }
+                } else {
+                    liveCloudListener?.remove()
+                    liveCloudListener = null
+                }
+            }
+        }
+    }
+
+    private var liveCloudListener: com.google.firebase.firestore.ListenerRegistration? = null
+
+    private val _cloudMaps = MutableStateFlow<List<MindMap>>(emptyList())
+    val cloudMaps: StateFlow<List<MindMap>> = _cloudMaps.asStateFlow()
+
+    private val _showCloudMapsDialog = MutableStateFlow(false)
+    val showCloudMapsDialog: StateFlow<Boolean> = _showCloudMapsDialog.asStateFlow()
+
+    fun setShowCloudMapsDialog(show: Boolean) {
+        _showCloudMapsDialog.value = show
+        if (show) {
+            loadCloudMaps()
+        }
+    }
+
+    fun loadCloudMaps() {
+        viewModelScope.launch {
+            val list = cloudSyncRepo.fetchCloudMaps()
+            _cloudMaps.value = list
+        }
+    }
+
+    fun openCloudMap(cloudMap: MindMap) {
+        viewModelScope.launch {
+            val localMaps = allMaps.value
+            val existing = localMaps.firstOrNull { it.id == cloudMap.id }
+            if (existing == null) {
+                repository.saveMap(cloudMap)
+            }
+            val cloudNodes = cloudSyncRepo.fetchCloudMapNodes(cloudMap.id)
+            if (cloudNodes.isNotEmpty()) {
+                repository.saveNodes(cloudNodes)
+                _nodes.value = cloudNodes
+            }
+            selectMap(cloudMap.id)
+            _showCloudMapsDialog.value = false
+        }
+    }
+
+    private fun attachLiveCloudListener(mapId: String) {
+        liveCloudListener?.remove()
+        if (currentUser.value != null) {
+            liveCloudListener = cloudSyncRepo.listenToMapNodes(mapId) { incomingNodes ->
+                if (incomingNodes.isNotEmpty() && _currentMapId.value == mapId) {
+                    _nodes.value = incomingNodes
+                    viewModelScope.launch {
+                        repository.saveNodes(incomingNodes)
+                    }
+                }
+            }
+        }
     }
 
     fun selectMap(mapId: String) {
@@ -218,6 +287,8 @@ class MindMapViewModel(application: Application) : AndroidViewModel(application)
         _panOffset.value = Offset.Zero
         _zoomScale.value = 1.0f
         _solutionBlueprint.value = null
+
+        attachLiveCloudListener(mapId)
 
         viewModelScope.launch {
             repository.getNodesForMap(mapId).collect { currentNodes ->
@@ -1056,10 +1127,15 @@ class MindMapViewModel(application: Application) : AndroidViewModel(application)
         repository.saveNodes(allUpdated)
         repository.saveEdges(newEdgesToSave)
         resetView()
+
+        if (currentUser.value != null) {
+            syncCurrentMapToCloud()
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
+        liveCloudListener?.remove()
         voiceManager.destroy()
     }
 }

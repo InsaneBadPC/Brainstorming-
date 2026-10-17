@@ -109,6 +109,7 @@ import com.example.ui.canvas.MindMapCanvasView
 import com.example.ui.dialogs.AppUpdateDialog
 import com.example.ui.dialogs.AuditDebateDialog
 import com.example.ui.dialogs.BrainstormCoPilotSheet
+import com.example.ui.dialogs.CloudMapsDialog
 import com.example.ui.dialogs.CloudSyncDialog
 import com.example.ui.dialogs.CreateNodeDialog
 import com.example.ui.dialogs.CreatePersonaDialog
@@ -199,6 +200,8 @@ fun MindMapScreen(
     val vibeArtifact by viewModel.vibeArtifact.collectAsState()
     val isVibeLoading by viewModel.isVibeLoading.collectAsState()
     val selectedVibeStack by viewModel.selectedVibeStack.collectAsState()
+    val cloudMaps by viewModel.cloudMaps.collectAsState()
+    val showCloudMapsDialog by viewModel.showCloudMapsDialog.collectAsState()
 
     LaunchedEffect(updateCheckMessage) {
         updateCheckMessage?.let {
@@ -1039,7 +1042,7 @@ fun MindMapScreen(
                                             },
                                             onClick = {
                                                 showMoreToolsMenu = false
-                                                showCloudSyncDialog = true
+                                                viewModel.setShowCloudMapsDialog(true)
                                             }
                                         )
                                         DropdownMenuItem(
@@ -1568,6 +1571,29 @@ fun MindMapScreen(
                     onSyncNow = {
                         viewModel.syncCurrentMapToCloud()
                     }
+                )
+            }
+
+            if (showCloudMapsDialog) {
+                CloudMapsDialog(
+                    currentUser = currentUser,
+                    cloudMaps = cloudMaps,
+                    isSyncing = isCloudSyncing,
+                    syncMessage = cloudSyncMessage,
+                    onDismiss = { viewModel.setShowCloudMapsDialog(false) },
+                    onSignIn = {
+                        viewModel.signInWithGoogle(
+                            onSuccess = { Toast.makeText(context, "Přihlášení úspěšné!", Toast.LENGTH_SHORT).show() },
+                            onError = { err -> Toast.makeText(context, "Chyba přihlášení: $err", Toast.LENGTH_LONG).show() }
+                        )
+                    },
+                    onSignOut = {
+                        viewModel.signOut()
+                        Toast.makeText(context, "Odhlášeno", Toast.LENGTH_SHORT).show()
+                    },
+                    onRefreshCloudMaps = { viewModel.loadCloudMaps() },
+                    onSelectCloudMap = { map -> viewModel.openCloudMap(map) },
+                    onSyncCurrentMap = { viewModel.syncCurrentMapToCloud() }
                 )
             }
 

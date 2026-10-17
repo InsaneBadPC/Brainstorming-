@@ -1,0 +1,12 @@
+{
+  "name": "mindcraft-webapp",
+  "version": "1.0.0",
+  "description": "MindCraft AI PC Web Companion with Real-time Firestore Cloud Sync",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["mindcraft", "ai", "mindmap", "vibe-coding", "firebase", "sync"],
+  "author": "MindCraft Team",
+  "license": "ISC"
+}

@@ -110,6 +110,129 @@ class FirestoreSyncRepository(
         }
     }
 
+    suspend fun fetchCloudMaps(): List<MindMap> = withContext(Dispatchers.IO) {
+        val user = auth.currentUser ?: return@withContext emptyList()
+        try {
+            val snapshot = firestore.collection("users")
+                .document(user.uid)
+                .collection("mind_maps")
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                val id = doc.getString("id") ?: doc.id
+                val title = doc.getString("title") ?: "Bez názvu"
+                val description = doc.getString("description") ?: ""
+                val seedPrompt = doc.getString("seedPrompt") ?: ""
+                val createdAt = doc.getLong("createdAt") ?: System.currentTimeMillis()
+                val updatedAt = doc.getLong("updatedAt") ?: createdAt
+
+                MindMap(
+                    id = id,
+                    title = title,
+                    description = description,
+                    seedPrompt = seedPrompt,
+                    createdAt = createdAt,
+                    updatedAt = updatedAt
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("FirestoreSyncRepo", "Chyba při načítání map z cloudu", e)
+            emptyList()
+        }
+    }
+
+    suspend fun fetchCloudMapNodes(mapId: String): List<MindNode> = withContext(Dispatchers.IO) {
+        val user = auth.currentUser ?: return@withContext emptyList()
+        try {
+            val snapshot = firestore.collection("users")
+                .document(user.uid)
+                .collection("mind_maps")
+                .document(mapId)
+                .collection("nodes")
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                mapDocumentToNode(doc, mapId)
+            }
+        } catch (e: Exception) {
+            Log.e("FirestoreSyncRepo", "Chyba při načítání uzlů z cloudu pro mapu $mapId", e)
+            emptyList()
+        }
+    }
+
+    /**
+     * Real-time snapshot listener: any change made on the PC webapp will instantly
+     * trigger this callback and update the mobile mind map view.
+     */
+    fun listenToMapNodes(mapId: String, onNodes: (List<MindNode>) -> Unit): com.google.firebase.firestore.ListenerRegistration? {
+        val user = auth.currentUser ?: return null
+        return firestore.collection("users")
+            .document(user.uid)
+            .collection("mind_maps")
+            .document(mapId)
+            .collection("nodes")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("FirestoreSyncRepo", "Chyba live snapshot listeneru", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val nodes = snapshot.documents.mapNotNull { doc ->
+                        mapDocumentToNode(doc, mapId)
+                    }
+                    if (nodes.isNotEmpty()) {
+                        onNodes(nodes)
+                    }
+                }
+            }
+    }
+
+    private fun mapDocumentToNode(doc: com.google.firebase.firestore.DocumentSnapshot, mapId: String): MindNode? {
+        val id = doc.getString("id") ?: doc.id
+        val title = doc.getString("title") ?: return null
+        val parentId = doc.getString("parentId")?.takeIf { it.isNotBlank() }
+        val details = doc.getString("details") ?: ""
+        val category = NodeCategory.fromString(doc.getString("category"))
+
+        val xPos = (doc.getDouble("xPos") ?: 0.0).toFloat()
+        val yPos = (doc.getDouble("yPos") ?: 0.0).toFloat()
+        val colorHex = doc.getString("colorHex") ?: "#00E5FF"
+        val isAiGenerated = doc.getBoolean("isAiGenerated") ?: false
+        val authorPersona = doc.getString("authorPersona")
+        val diagramData = doc.getString("diagramData")
+        val searchSources = doc.getString("searchSources")
+        val checklistJson = doc.getString("checklistJson")
+        val wireframeMockup = doc.getString("wireframeMockup")
+        val clusterTag = doc.getString("clusterTag")
+        val roadmapPhase = doc.getString("roadmapPhase")
+        val isCompleted = doc.getBoolean("isCompleted") ?: false
+        val isExpanded = doc.getBoolean("isExpanded") ?: true
+
+        return MindNode(
+            id = id,
+            mapId = mapId,
+            parentId = parentId,
+            title = title,
+            details = details,
+            category = category,
+            xPos = xPos,
+            yPos = yPos,
+            colorHex = colorHex,
+            isAiGenerated = isAiGenerated,
+            authorPersona = authorPersona,
+            diagramData = diagramData,
+            searchSources = searchSources,
+            checklistJson = checklistJson,
+            wireframeMockup = wireframeMockup,
+            clusterTag = clusterTag,
+            roadmapPhase = roadmapPhase,
+            isCompleted = isCompleted,
+            isExpanded = isExpanded
+        )
+    }
+
     suspend fun syncCustomPersonas(personas: List<CustomPersona>): Boolean = withContext(Dispatchers.IO) {
         val user = auth.currentUser ?: return@withContext false
         try {
@@ -138,3 +261,4 @@ class FirestoreSyncRepository(
         }
     }
 }
+
