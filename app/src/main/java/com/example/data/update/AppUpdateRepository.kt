@@ -208,15 +208,56 @@ class AppUpdateRepository(
             val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
             if (downloadManager != null && downloadUrl.startsWith("http")) {
                 val uri = Uri.parse(downloadUrl)
+                val safeFileName = fileName.ifBlank { "Craftmind-update.apk" }
                 val request = DownloadManager.Request(uri).apply {
                     setTitle("Stahování aktualizace Craftmind")
-                    setDescription(fileName)
+                    setDescription(safeFileName)
                     setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, safeFileName)
                     setMimeType("application/vnd.android.package-archive")
                 }
-                downloadManager.enqueue(request)
-                Toast.makeText(context, "Stahování zahájeno: $fileName (viz stavová lišta)", Toast.LENGTH_LONG).show()
+                val downloadId = downloadManager.enqueue(request)
+                Toast.makeText(context, "Stahování zahájeno: $safeFileName (po dokončení se otevře instalátor)", Toast.LENGTH_LONG).show()
+
+                // Register receiver to automatically launch installer on download complete
+                val onComplete = object : android.content.BroadcastReceiver() {
+                    override fun onReceive(ctxt: Context?, intent: Intent?) {
+                        val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) ?: -1
+                        if (id == downloadId && ctxt != null) {
+                            try {
+                                val installUri = downloadManager.getUriForDownloadedFile(downloadId)
+                                if (installUri != null) {
+                                    val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                                        setDataAndType(installUri, "application/vnd.android.package-archive")
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    ctxt.startActivity(installIntent)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("AppUpdateRepository", "Failed to launch package installer", e)
+                            } finally {
+                                try {
+                                    ctxt.unregisterReceiver(this)
+                                } catch (_: Exception) {}
+                            }
+                        }
+                    }
+                }
+
+                val appContext = context.applicationContext
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    appContext.registerReceiver(
+                        onComplete,
+                        android.content.IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                        Context.RECEIVER_EXPORTED
+                    )
+                } else {
+                    appContext.registerReceiver(
+                        onComplete,
+                        android.content.IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+                    )
+                }
             } else {
                 openUrlInBrowser(context, downloadUrl)
             }

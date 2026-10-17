@@ -1664,7 +1664,9 @@ fun MindMapScreen(
                     updateInfo = appUpdateInfo!!,
                     onDismiss = { viewModel.dismissUpdateDialog() },
                     onDownloadApk = { viewModel.downloadAndInstallUpdate(context) },
-                    onOpenGitHubRelease = { viewModel.openGitHubRelease(context) }
+                    onOpenGitHubRelease = { viewModel.openGitHubRelease(context) },
+                    onRefreshCheck = { viewModel.checkForUpdates(isUserInitiated = true) },
+                    onSaveSettings = { slug, token -> viewModel.updateRepoSettings(slug, token) }
                 )
             }
 
