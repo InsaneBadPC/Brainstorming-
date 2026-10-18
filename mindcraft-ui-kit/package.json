@@ -1,0 +1,7 @@
+{
+  "name": "mindcraft-ui-kit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portable React UI components for MindCraft",
+  "peerDependencies": { "react": ">=18" }
+}

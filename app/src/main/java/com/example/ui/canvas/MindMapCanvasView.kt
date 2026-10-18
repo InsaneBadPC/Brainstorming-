@@ -252,12 +252,12 @@ fun MindMapCanvasView(
         // 2. Floating On-Screen Canvas Controls (Zoom In/Out, 100%, Auto-Layout, Recenter)
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = SlateCard.copy(alpha = 0.92f),
+            color = SlateCard.copy(alpha = 0.94f),
             border = androidx.compose.foundation.BorderStroke(1.dp, TechBorder),
             shadowElevation = 10.dp,
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 120.dp, end = 12.dp)
+                .align(Alignment.CenterEnd)
+                .padding(end = 12.dp)
                 .testTag("canvas_zoom_controls")
         ) {
             Column(
@@ -339,42 +339,7 @@ fun MindMapCanvasView(
             }
         }
 
-        // 3. Mini Node Count & Gesture Guide Pill (Clickable to open features guide)
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = SlateCard.copy(alpha = 0.92f),
-            border = androidx.compose.foundation.BorderStroke(1.dp, TechBorder),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 120.dp, start = 12.dp)
-                .clickable { onOpenFeaturesGuide() }
-                .testTag("pill_gesture_guide")
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(NeonCyan, CircleShape)
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = "${nodes.size} uzlů • Zoom 2 prsty",
-                    fontSize = 10.sp,
-                    color = TextMuted,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Průvodce funkcemi a gesty",
-                    tint = NeonCyan,
-                    modifier = Modifier.size(12.dp)
-                )
-            }
-        }
+
     }
 }
 }

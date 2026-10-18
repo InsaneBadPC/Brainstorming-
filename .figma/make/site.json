@@ -1,0 +1,10 @@
+{
+  "description": "Offers a collection of modern, vibrant blue UI elements for mobile apps, enhancing design originality and visual appeal for developers and designers.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

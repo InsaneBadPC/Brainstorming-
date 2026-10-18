@@ -427,9 +427,9 @@ class MindMapViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun startAuditDebate(rounds: Int = 3, enableVoice: Boolean = true) {
+    fun startAuditDebate(rounds: Int = 3, enableVoice: Boolean = false, customTopic: String? = null) {
         val mapId = _currentMapId.value ?: return
-        val currentTitle = allMaps.value.firstOrNull { it.id == mapId }?.title ?: "Projekt"
+        val currentTitle = if (!customTopic.isNullOrBlank()) customTopic else (allMaps.value.firstOrNull { it.id == mapId }?.title ?: "Projekt")
 
         auditJob?.cancel()
         _isAuditRunning.value = true

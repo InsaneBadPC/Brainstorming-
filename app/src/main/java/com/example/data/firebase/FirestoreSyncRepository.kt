@@ -102,7 +102,7 @@ class FirestoreSyncRepository(
             _syncMessage.value = "Mapa úspěšně uložena do Firebase Cloudu"
             true
         } catch (e: Exception) {
-            Log.e("FirestoreSyncRepo", "Chyba synchronizace", e)
+            Log.w("FirestoreSyncRepo", "Cloud synchronizace dočasně nedostupná: ${e.localizedMessage}")
             _syncMessage.value = "Chyba cloudu: ${e.localizedMessage}"
             false
         } finally {
@@ -137,7 +137,7 @@ class FirestoreSyncRepository(
                 )
             }
         } catch (e: Exception) {
-            Log.e("FirestoreSyncRepo", "Chyba při načítání map z cloudu", e)
+            Log.w("FirestoreSyncRepo", "Načítání cloudových map: ${e.localizedMessage}")
             emptyList()
         }
     }
@@ -157,7 +157,7 @@ class FirestoreSyncRepository(
                 mapDocumentToNode(doc, mapId)
             }
         } catch (e: Exception) {
-            Log.e("FirestoreSyncRepo", "Chyba při načítání uzlů z cloudu pro mapu $mapId", e)
+            Log.w("FirestoreSyncRepo", "Načítání uzlů z cloudu pro mapu $mapId: ${e.localizedMessage}")
             emptyList()
         }
     }
@@ -175,7 +175,7 @@ class FirestoreSyncRepository(
             .collection("nodes")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e("FirestoreSyncRepo", "Chyba live snapshot listeneru", error)
+                    Log.w("FirestoreSyncRepo", "Live snapshot listener: ${error.localizedMessage}")
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {

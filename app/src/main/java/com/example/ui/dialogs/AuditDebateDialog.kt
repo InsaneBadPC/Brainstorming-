@@ -43,6 +43,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -99,12 +101,13 @@ fun AuditDebateDialog(
     report: AuditDebateReport?,
     currentSpeaker: AiPersona?,
     onDismiss: () -> Unit,
-    onStartDebate: (rounds: Int, enableVoice: Boolean) -> Unit,
+    onStartDebate: (rounds: Int, enableVoice: Boolean, customTopic: String?) -> Unit,
     onStopDebate: () -> Unit,
     onClearReport: () -> Unit
 ) {
     var configuredRounds by remember { mutableIntStateOf(3) }
-    var enableVoice by remember { mutableStateOf(true) }
+    var enableVoice by remember { mutableStateOf(false) } // Default to text-first as requested
+    var customTopic by remember { mutableStateOf(projectTitle) }
     var selectedReportTab by remember { mutableIntStateOf(0) }
     var showInstructionsDetail by remember { mutableStateOf(false) }
 
@@ -128,8 +131,8 @@ fun AuditDebateDialog(
             color = SlateCard,
             border = androidx.compose.foundation.BorderStroke(1.2.dp, TechBorder),
             modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.92f)
+                .fillMaxWidth(0.96f)
+                .fillMaxHeight(0.94f)
         ) {
             Column(
                 modifier = Modifier
@@ -145,25 +148,20 @@ fun AuditDebateDialog(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
-                                .background(NeonCoral.copy(alpha = 0.2f))
-                                .border(1.dp, NeonCoral, CircleShape),
+                                .background(NeonCyan.copy(alpha = 0.2f))
+                                .border(1.2.dp, NeonCyan, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Security,
-                                contentDescription = null,
-                                tint = NeonCoral,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Text(text = "🌟", fontSize = 20.sp)
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "Architektonický & Tech Audit",
-                                    fontSize = 17.sp,
+                                    text = "Kulatý stůl 3 AI • Živá debata",
+                                    fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary
                                 )
@@ -171,31 +169,22 @@ fun AuditDebateDialog(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(Color(0xFF4285F4).copy(alpha = 0.2f))
-                                        .border(0.8.dp, Color(0xFF4285F4), RoundedCornerShape(6.dp))
+                                        .background(NeonPurple.copy(alpha = 0.25f))
+                                        .border(0.8.dp, NeonPurple, RoundedCornerShape(6.dp))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.Language,
-                                            contentDescription = null,
-                                            tint = Color(0xFF4285F4),
-                                            modifier = Modifier.size(10.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(3.dp))
-                                        Text(
-                                            text = "Web 2026",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF4285F4)
-                                        )
-                                    }
+                                    Text(
+                                        text = "3 Modely",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = NeonPurple
+                                    )
                                 }
                             }
                             Text(
-                                text = "Prověrka chyb, zastaralých nástrojů a multi-round AI debata",
+                                text = "💡 Nova (Vizionář) • ⚖️ Vortex (Kritik) • 📈 Atlas (Realizátor)",
                                 fontSize = 11.sp,
-                                color = TextSecondary
+                                color = NeonCyan
                             )
                         }
                     }
@@ -240,6 +229,8 @@ fun AuditDebateDialog(
                     // STATE 3: PRE-LAUNCH CONFIGURATION
                     DebateConfigView(
                         projectTitle = projectTitle,
+                        customTopic = customTopic,
+                        onTopicChange = { customTopic = it },
                         nodeCount = nodeCount,
                         configuredRounds = configuredRounds,
                         onRoundsChange = { configuredRounds = it },
@@ -247,7 +238,7 @@ fun AuditDebateDialog(
                         onEnableVoiceChange = { enableVoice = it },
                         showInstructions = showInstructionsDetail,
                         onToggleInstructions = { showInstructionsDetail = !showInstructionsDetail },
-                        onStart = { onStartDebate(configuredRounds, enableVoice) },
+                        onStart = { onStartDebate(configuredRounds, enableVoice, customTopic) },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -259,6 +250,8 @@ fun AuditDebateDialog(
 @Composable
 private fun DebateConfigView(
     projectTitle: String,
+    customTopic: String,
+    onTopicChange: (String) -> Unit,
     nodeCount: Int,
     configuredRounds: Int,
     onRoundsChange: (Int) -> Unit,
@@ -277,28 +270,57 @@ private fun DebateConfigView(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Project Summary Banner
+            // 1. Topic input Card
             item {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = SlateCardElevated,
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = SlateCardElevated),
                     border = androidx.compose.foundation.BorderStroke(1.dp, TechBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(12.dp)
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Prověřovaný projekt", fontSize = 11.sp, color = TextMuted)
-                            Text(text = projectTitle, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = NeonCyan)
-                            Text(text = "$nodeCount uzlů v myšlenkové mapě", fontSize = 11.sp, color = TextSecondary)
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "🎯 Téma debaty Kulatého stolu",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "$nodeCount uzlů v mapě",
+                                fontSize = 10.sp,
+                                color = TextSecondary
+                            )
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "O čem mají Nova, Vortex a Atlas debatovat a hledat řešení?",
+                            fontSize = 11.sp,
+                            color = TextMuted
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = customTopic,
+                            onValueChange = onTopicChange,
+                            placeholder = { Text("Zadejte téma nebo cíl projektu...", color = TextMuted, fontSize = 13.sp) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = NeonCyan,
+                                unfocusedBorderColor = TechBorder,
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
 
-            // Rounds Configuration Slider
+            // 2. Big Interactive Rounds Cards (1, 2, 3, 5 kol)
             item {
                 Card(
                     shape = RoundedCornerShape(14.dp),
@@ -313,7 +335,7 @@ private fun DebateConfigView(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Počet kol AI debaty",
+                                text = "⚡ Zvolte počet kol debaty",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
@@ -321,40 +343,70 @@ private fun DebateConfigView(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(NeonPurple.copy(alpha = 0.2f))
+                                    .background(NeonPurple.copy(alpha = 0.25f))
                                     .border(1.dp, NeonPurple, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    .padding(horizontal = 10.dp, vertical = 3.dp)
                             ) {
                                 Text(
                                     text = "$configuredRounds ${if (configuredRounds == 1) "kolo" else if (configuredRounds in 2..4) "kola" else "kol"}",
-                                    fontSize = 13.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = NeonPurple
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                        Slider(
-                            value = configuredRounds.toFloat(),
-                            onValueChange = { onRoundsChange(it.roundToInt().coerceIn(1, 5)) },
-                            valueRange = 1f..5f,
-                            steps = 3,
-                            colors = SliderDefaults.colors(
-                                thumbColor = NeonPurple,
-                                activeTrackColor = NeonPurple,
-                                inactiveTrackColor = SlateCard
-                            ),
-                            modifier = Modifier.testTag("slider_audit_rounds")
-                        )
+                        // 4 Interactive Round Cards
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            val roundOptions = listOf(
+                                Pair(1, "1 kolo\n⚡ Rychlé"),
+                                Pair(2, "2 kola\n💬 Diskuze"),
+                                Pair(3, "3 kola\n⭐ Vize+Kritika"),
+                                Pair(5, "5 kol\n🔬 Hloubkové")
+                            )
+                            roundOptions.forEach { (r, label) ->
+                                val isSelected = configuredRounds == r
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (isSelected) NeonPurple.copy(alpha = 0.28f) else SlateCard,
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        width = if (isSelected) 1.8.dp else 1.dp,
+                                        color = if (isSelected) NeonPurple else TechBorder
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { onRoundsChange(r) }
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 11.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) NeonCyan else TextPrimary,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                            lineHeight = 15.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
                             text = when (configuredRounds) {
-                                1 -> "1 kolo: Rychlá detekce kritických chyb a zastaralých závislostí."
-                                2 -> "2 kola: Hloubková kritika + průzkum moderních webových alternativ."
-                                3 -> "3 kola (Doporučeno): Kompletní audit chyb, eliminace single-points-of-failure a procesní diagram."
-                                else -> "$configuredRounds kol: Extrémní stress-test komplexního ekosystému s produkční roadmapou."
+                                1 -> "1 kolo: Rychlá výměna názorů – Nova navrhne inovaci, Vortex otestuje riziko, Atlas nabídne syntézu."
+                                2 -> "2 kola: Hloubková polemika s protiargumenty a vyhledáním moderních řešení."
+                                3 -> "3 kola (Doporučeno): Kompletní syntéza vize, bezpečnostní kritiky a finálního akčního plánu."
+                                else -> "$configuredRounds kol: Maximální zátěžový test projektu s podrobnými instrukcemi a diagramy."
                             },
                             fontSize = 11.sp,
                             color = NeonCyan,
@@ -364,7 +416,7 @@ private fun DebateConfigView(
                 }
             }
 
-            // Realtime Web & Voice Settings
+            // 3. Settings: Voice mode toggle (Off by default for fast reading) & Realtime Web
             item {
                 Card(
                     shape = RoundedCornerShape(14.dp),
@@ -379,36 +431,20 @@ private fun DebateConfigView(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(imageVector = Icons.Default.Language, contentDescription = null, tint = Color(0xFF4285F4), modifier = Modifier.size(18.dp))
+                                Icon(imageVector = Icons.Default.VolumeUp, contentDescription = null, tint = if (enableVoice) NeonCyan else TextMuted, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
-                                    Text(text = "Realtime přístup k webu (Google)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                                    Text(text = "Ověřování aktuálních verzí knihoven, CVE zranitelností a trendů 2026", fontSize = 10.sp, color = TextSecondary)
-                                }
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(NeonEmerald.copy(alpha = 0.2f))
-                                    .padding(horizontal = 6.dp, vertical = 3.dp)
-                            ) {
-                                Text(text = "Aktivní", fontSize = 10.sp, color = NeonEmerald, fontWeight = FontWeight.Bold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(imageVector = Icons.Default.VolumeUp, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text(text = "Hlasová debata (TTS)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                                    Text(text = "Každá AI mluví s vlastním tónem hlasu a intonací", fontSize = 10.sp, color = TextSecondary)
+                                    Text(
+                                        text = if (enableVoice) "Hlasové předčítání (TTS) zapnuto" else "Textový chat (Tichý režim)",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                    Text(
+                                        text = if (enableVoice) "AI persony předčítají své příspěvky nahlas" else "Výchozí rychlý text – bez automatického hlasu",
+                                        fontSize = 10.sp,
+                                        color = TextSecondary
+                                    )
                                 }
                             }
                             Switch(
@@ -420,11 +456,36 @@ private fun DebateConfigView(
                                 )
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(imageVector = Icons.Default.Language, contentDescription = null, tint = Color(0xFF4285F4), modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(text = "Ověřování na webu (Google Search)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    Text(text = "Ověřování trendů a reálných dat online", fontSize = 10.sp, color = TextSecondary)
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(NeonEmerald.copy(alpha = 0.2f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(text = "Aktivní", fontSize = 9.sp, color = NeonEmerald, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
 
-            // Thorough Instructions for the 3 AI Agents (Accordion)
+            // 4. Detailed AI Personas Overview
             item {
                 Card(
                     shape = RoundedCornerShape(14.dp),
@@ -441,7 +502,7 @@ private fun DebateConfigView(
                                 .clickable { onToggleInstructions() }
                         ) {
                             Text(
-                                text = "📋 Důkladné instrukce pro 3 AI (vč. Minecraft & tech úkolů)",
+                                text = "👥 Účastníci Kulatého stolu (Nova, Vortex, Atlas)",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
@@ -456,18 +517,18 @@ private fun DebateConfigView(
                         AnimatedVisibility(visible = showInstructions) {
                             Column(modifier = Modifier.padding(top = 10.dp)) {
                                 PersonaInstructionCard(
-                                    persona = AiPersona.VORTEX,
-                                    instruction = "Nemilosrdný kritik: V každém kole hledá architektonické chyby, zranitelnosti, slabiny a ověřuje přes web zda navržené nástroje nejsou zastaralé nebo nebezpečné."
+                                    persona = AiPersona.NOVA,
+                                    instruction = "💡 Nova (Vizionář & Kreativec): Přináší neotřelé, inovativní nápady a netradiční perspektivy."
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 PersonaInstructionCard(
-                                    persona = AiPersona.NOVA,
-                                    instruction = "Inovátorka & realtime web: Na základě výtek Vortexe vyhledává na webu moderní frameworky pro rok 2026, 10x lepší open-source knihovny a škálovatelné alternativy."
+                                    persona = AiPersona.VORTEX,
+                                    instruction = "⚖️ Vortex (Kritik & Pragmatik): Hledá slabiny, rizika, pasti a prověřuje reálné překážky."
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 PersonaInstructionCard(
                                     persona = AiPersona.ATLAS,
-                                    instruction = "Hlavní systémový architekt: Syntetizuje obě strany do reálné architektury, sestavuje migrační diagramy a generuje DŮKLADNÉ KROKOVÉ INSTRUKCE ke všem úkolům (včetně instrukcí pro AI boty v Minecraftu / MindCraftu, parametrů, syntaxe a kontrolních podmínek)."
+                                    instruction = "📈 Atlas (Architekt & Realizátor): Syntetizuje obě strany, formuluje kompromisy a konkrétní akční kroky pro mapu."
                                 )
                             }
                         }
@@ -478,20 +539,20 @@ private fun DebateConfigView(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Start Button
+        // Start Debate Button
         Button(
             onClick = onStart,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(52.dp)
                 .testTag("btn_start_audit_debate")
         ) {
             Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Spustit debatu ($configuredRounds ${if (configuredRounds == 1) "kolo" else if (configuredRounds in 2..4) "kola" else "kol"})",
+                text = "🚀 Zahájit debatu Kulatého stolu ($configuredRounds ${if (configuredRounds == 1) "kolo" else if (configuredRounds in 2..4) "kola" else "kol"})",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White

@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,10 +48,12 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Remove
@@ -130,12 +133,14 @@ import com.example.ui.dialogs.WhatIfSimulationDialog
 import com.example.ui.matrix.PrioritizationMatrixView
 import com.example.ui.pitch.PitchPresentationOverlay
 import com.example.ui.roadmap.RoadmapTimelineView
+import com.example.ui.theme.FramerBlue
 import com.example.ui.theme.NeonAmber
 import com.example.ui.theme.NeonCoral
 import com.example.ui.theme.NeonCyan
 import com.example.ui.theme.NeonEmerald
 import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.ObsidianBg
+import com.example.ui.theme.PureWhite
 import com.example.ui.theme.SlateCard
 import com.example.ui.theme.SlateCardElevated
 import com.example.ui.theme.TechBorder
@@ -443,7 +448,7 @@ fun MindMapScreen(
                     .align(Alignment.TopCenter)
             ) {
                 Surface(
-                    color = SlateCard.copy(alpha = 0.94f),
+                    color = Color(0xFF000000).copy(alpha = 0.96f),
                     shadowElevation = 8.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -490,7 +495,7 @@ fun MindMapScreen(
                                                 imageVector = Icons.Default.KeyboardArrowDown,
                                                 contentDescription = null,
                                                 tint = TextSecondary,
-                                                modifier = Modifier.size(15.dp)
+                                                modifier = Modifier.size(16.dp)
                                             )
                                         }
 
@@ -594,26 +599,27 @@ fun MindMapScreen(
                                 }
                             } else {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .background(NeonCyan.copy(alpha = 0.15f), CircleShape)
-                                            .border(1.dp, NeonCyan.copy(alpha = 0.4f), CircleShape)
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = Color(0xFF141A26),
+                                        border = BorderStroke(1.dp, Color(0xFF0066FF).copy(alpha = 0.5f)),
+                                        modifier = Modifier.size(32.dp)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Hub,
-                                            contentDescription = null,
-                                            tint = NeonCyan,
-                                            modifier = Modifier.size(18.dp)
-                                        )
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.Hub,
+                                                contentDescription = null,
+                                                tint = Color(0xFF38BDF8),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "MindCraft AI",
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
+                                        text = "MindCraft",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -630,122 +636,38 @@ fun MindMapScreen(
                                     )
                                 }
 
-                                // Google Free AI Model Chip
-                                Surface(
-                                    shape = RoundedCornerShape(9.dp),
-                                    color = SlateCardElevated,
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, TechBorder),
-                                    modifier = Modifier
-                                        .clickable { showModelSelectorDialog = true }
-                                        .testTag("chip_google_ai_model")
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
-                                            contentDescription = null,
-                                            tint = NeonCyan,
-                                            modifier = Modifier.size(13.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(3.dp))
-                                        Text(
-                                            text = selectedGoogleModel.badge,
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = NeonCyan
-                                        )
-                                    }
-                                }
-
                                 Spacer(modifier = Modifier.width(6.dp))
 
-                                // Quick New Map button
-                                IconButton(
-                                    onClick = { showNewMapDialog = true },
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .background(NeonCyan.copy(alpha = 0.15f), RoundedCornerShape(9.dp))
-                                        .border(1.dp, NeonCyan.copy(alpha = 0.4f), RoundedCornerShape(9.dp))
-                                        .testTag("btn_quick_new_map")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Nová mapa",
-                                        tint = NeonCyan,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(5.dp))
-
-                                // Features Center & Guide Button (Prominent top bar access)
+                                // Features Center & Guide Button (Framer Pill access)
                                 Surface(
-                                    shape = RoundedCornerShape(9.dp),
-                                    color = SlateCardElevated,
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f)),
+                                    shape = RoundedCornerShape(999.dp),
+                                    color = Color(0x18FFFFFF),
+                                    border = BorderStroke(1.dp, Color(0x33FFFFFF)),
                                     modifier = Modifier
                                         .clickable { showFeaturesCatalogDialog = true }
                                         .testTag("btn_top_features_catalog")
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 6.dp)
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Apps,
                                             contentDescription = "Centrum funkcí & Nápověda",
-                                            tint = NeonCyan,
+                                            tint = Color.White,
                                             modifier = Modifier.size(14.dp)
                                         )
-                                        Spacer(modifier = Modifier.width(3.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
                                         Text(
-                                            text = "⚡ Funkce",
-                                            fontSize = 10.sp,
+                                            text = "Funkce",
+                                            fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = NeonCyan
+                                            color = Color.White
                                         )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(4.dp))
-
-                                // Vibe Coding & Code Scaffolder Button
-                                Surface(
-                                    shape = RoundedCornerShape(9.dp),
-                                    color = SlateCardElevated,
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.5f)),
-                                    modifier = Modifier
-                                        .clickable {
-                                            if (vibeArtifact == null) {
-                                                viewModel.generateVibeArtifact(targetNode = selectedNode)
-                                            }
-                                            showVibeCodingDialog = true
-                                        }
-                                        .testTag("btn_top_vibe_coding")
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Code,
-                                            contentDescription = "Vibe Coding & Scaffolder",
-                                            tint = NeonEmerald,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(3.dp))
-                                        Text(
-                                            text = "💻 Vibe Code",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = NeonEmerald
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.width(4.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
 
                                 // More Tools Dropdown Menu (Clean centralized tools menu)
                                 Box {
@@ -853,9 +775,40 @@ fun MindMapScreen(
                                         DropdownMenuItem(
                                             text = {
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    Icon(imageVector = Icons.Default.Security, contentDescription = null, tint = NeonCoral, modifier = Modifier.size(17.dp))
+                                                    Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(17.dp))
                                                     Spacer(modifier = Modifier.width(8.dp))
-                                                    Text("🛡️ Hloubkový Audit & Debata", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                                    Text("➕ Vytvořit novou mapu", color = NeonCyan, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                                }
+                                            },
+                                            onClick = {
+                                                showMoreToolsMenu = false
+                                                showNewMapDialog = true
+                                            }
+                                        )
+
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(17.dp))
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text("🤖 Přepnout model: ${selectedGoogleModel.badge}", color = TextPrimary, fontSize = 12.sp)
+                                                }
+                                            },
+                                            onClick = {
+                                                showMoreToolsMenu = false
+                                                showModelSelectorDialog = true
+                                            }
+                                        )
+
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Text("🌟", fontSize = 16.sp)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Column {
+                                                        Text("Kulatý stůl 3 AI (Živá debata)", color = NeonPurple, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                                        Text("Nova, Vortex a Atlas diskutují v kolech", color = TextSecondary, fontSize = 9.sp)
+                                                    }
                                                 }
                                             },
                                             onClick = {
@@ -1113,6 +1066,7 @@ fun MindMapScreen(
                                         onClick = {
                                             viewModel.selectPersona(null)
                                             viewModel.selectCustomPersona(null)
+                                            showAuditDebateDialog = true
                                         }
                                     )
                                 }
@@ -1148,36 +1102,36 @@ fun MindMapScreen(
                 }
             }
 
-            // 4. Contextual Selected Node Toolbar (Floats above bottom dock when a node is selected)
+            // 4. Unified Non-Overlapping Bottom Bar System
             if (currentMap != null) {
-                AnimatedVisibility(
-                    visible = selectedNode != null,
-                    enter = fadeIn() + slideInVertically { it },
-                    exit = fadeOut() + slideOutVertically { it },
+                Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
-                        .padding(bottom = 76.dp, start = 12.dp, end = 12.dp)
+                        .padding(bottom = 12.dp, start = 12.dp, end = 12.dp)
                 ) {
                     if (selectedNode != null) {
+                        // A: Contextual Node Action Toolbar (Docks cleanly at the bottom, zero overlapping)
                         Surface(
                             shape = RoundedCornerShape(18.dp),
                             color = SlateCard.copy(alpha = 0.98f),
                             border = androidx.compose.foundation.BorderStroke(1.5.dp, selectedNode.category.defaultColor),
-                            shadowElevation = 12.dp,
-                            modifier = Modifier.widthIn(max = 500.dp)
+                            shadowElevation = 14.dp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 600.dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
                             ) {
                                 // Selected Node Title Indicator
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .weight(1f, fill = false)
-                                        .padding(end = 6.dp)
+                                        .padding(end = 4.dp)
                                 ) {
                                     Box(
                                         modifier = Modifier
@@ -1262,7 +1216,7 @@ fun MindMapScreen(
                                     )
                                 }
 
-                                // 5. Vibe Coding & Scaffold for Selected Node
+                                // 5. Vibe Coding
                                 IconButton(
                                     onClick = {
                                         viewModel.generateVibeArtifact(targetNode = selectedNode)
@@ -1275,7 +1229,7 @@ fun MindMapScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Code,
-                                        contentDescription = "Vibe Coding (Kód & Cursor)",
+                                        contentDescription = "Vibe Coding (Kód)",
                                         tint = NeonEmerald,
                                         modifier = Modifier.size(16.dp)
                                     )
@@ -1297,24 +1251,6 @@ fun MindMapScreen(
                                     )
                                 }
 
-                                // 6. Info & Guide for node actions
-                                IconButton(
-                                    onClick = {
-                                        showFeaturesCatalogDialog = true
-                                    },
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .background(NeonCyan.copy(alpha = 0.12f), CircleShape)
-                                        .testTag("btn_toolbar_info")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = "Podrobné info o funkcích",
-                                        tint = NeonCyan,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-
                                 // 7. Close / Deselect
                                 IconButton(
                                     onClick = { viewModel.selectNode(null) },
@@ -1322,117 +1258,142 @@ fun MindMapScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Zavřít",
+                                        contentDescription = "Zavřít lištu uzlu",
                                         tint = TextMuted,
                                         modifier = Modifier.size(15.dp)
                                     )
                                 }
                             }
                         }
-                    }
-                }
-            }
-
-            // 5. Unified Bottom Action Dock (Add Node + Voice Assistant + 3-AI Chat)
-            if (currentMap != null) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .navigationBarsPadding()
-                        .padding(bottom = 12.dp, start = 12.dp, end = 12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .widthIn(max = 600.dp)
-                    ) {
-                        // Quick "+ Uzel" Manual Creation Button
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = SlateCard.copy(alpha = 0.95f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, TechBorder),
-                            shadowElevation = 8.dp,
+                    } else {
+                        // B: Standard Creation & AI Copilot Dock (Zero overlapping, text-first by default)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier
-                                .clickable { showAddNodeDialog = true }
-                                .testTag("btn_manual_add_node")
+                                .fillMaxWidth()
+                                .widthIn(max = 600.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp)
+                            // Quick "+ Uzel" Framer White Pill Button
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = PureWhite,
+                                shadowElevation = 10.dp,
+                                modifier = Modifier
+                                    .clickable { showAddNodeDialog = true }
+                                    .testTag("btn_manual_add_node")
                             ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .background(NeonCyan, CircleShape)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 11.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Add,
                                         contentDescription = null,
                                         tint = Color.Black,
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "+ Uzel",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.Black
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Uzel",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
                             }
-                        }
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                            // AI Copilot Interactive Prompt Pill with Framer Blue Aura Glow
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = SlateCard.copy(alpha = 0.96f),
+                                border = androidx.compose.foundation.BorderStroke(1.2.dp, FramerBlue.copy(alpha = 0.6f)),
+                                shadowElevation = 12.dp,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { showCoPilotSheet = true }
+                                    .testTag("bar_ai_copilot_prompt")
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = null,
+                                        tint = NeonCyan,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Zeptejte se AI rádce...",
+                                        fontSize = 12.sp,
+                                        color = TextMuted,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    // Voice input switch button (switch to voice on demand)
+                                    IconButton(
+                                        onClick = {
+                                            val hasPermission = ContextCompat.checkSelfPermission(
+                                                context,
+                                                Manifest.permission.RECORD_AUDIO
+                                            ) == PackageManager.PERMISSION_GRANTED
 
-                        // Voice Waveform & Transcription Assistant
-                        VoiceWaveformBar(
-                            voiceState = voiceState,
-                            transcription = transcription,
-                            audioRms = audioRms,
-                            isAiProcessing = isAiProcessing,
-                            onMicClick = {
-                                if (voiceState == VoiceState.LISTENING) {
-                                    viewModel.voiceManager.stopListening()
-                                } else {
-                                    val hasPermission = ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.RECORD_AUDIO
-                                    ) == PackageManager.PERMISSION_GRANTED
-
-                                    if (hasPermission) {
-                                        viewModel.voiceManager.startListening { spoken ->
-                                            viewModel.aiProcessVoiceOrChatInput(spoken)
-                                        }
-                                    } else {
-                                        audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                            if (hasPermission) {
+                                                if (voiceState == VoiceState.LISTENING) {
+                                                    viewModel.voiceManager.stopListening()
+                                                } else {
+                                                    viewModel.voiceManager.startListening { spoken ->
+                                                        viewModel.aiProcessVoiceOrChatInput(spoken)
+                                                    }
+                                                }
+                                            } else {
+                                                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .background(
+                                                if (voiceState == VoiceState.LISTENING) NeonCyan.copy(alpha = 0.25f) else Color.Transparent,
+                                                CircleShape
+                                            )
+                                            .testTag("btn_bottom_mic_toggle")
+                                    ) {
+                                        Icon(
+                                            imageVector = if (voiceState == VoiceState.LISTENING) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.Mic,
+                                            contentDescription = "Přepnout do hlasového režimu",
+                                            tint = if (voiceState == VoiceState.LISTENING) NeonCyan else TextSecondary,
+                                            modifier = Modifier.size(15.dp)
+                                        )
                                     }
                                 }
-                            },
-                            onStopSpeaking = { viewModel.voiceManager.stopSpeaking() },
-                            modifier = Modifier.weight(1f)
-                        )
+                            }
 
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Open Full 3-AI Roundtable Chat Sheet Button
-                        FloatingActionButton(
-                            onClick = { showCoPilotSheet = true },
-                            containerColor = selectedPersona?.color ?: NeonPurple,
-                            contentColor = Color.White,
-                            shape = CircleShape,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .shadow(8.dp, CircleShape, spotColor = selectedPersona?.color ?: NeonPurple)
-                                .testTag("btn_open_copilot")
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Chat,
-                                contentDescription = "Otevřít 3 AI Chat",
-                                modifier = Modifier.size(22.dp)
-                            )
+                            // Open 3-AI Roundtable Debate Button (Framer Pill)
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = FramerBlue,
+                                shadowElevation = 12.dp,
+                                modifier = Modifier
+                                    .clickable { showAuditDebateDialog = true }
+                                    .testTag("btn_open_roundtable_debate")
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp)
+                                ) {
+                                    Text(text = "🌟", fontSize = 13.sp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Debata",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -1493,7 +1454,29 @@ fun MindMapScreen(
                         speechRate = persona?.speechRate ?: 1f
                     )
                 },
-                onGenerateBlueprint = { viewModel.aiGenerateBlueprint() }
+                onGenerateBlueprint = { viewModel.aiGenerateBlueprint() },
+                onToggleVoiceMode = {
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (hasPermission) {
+                        if (voiceState == VoiceState.LISTENING) {
+                            viewModel.voiceManager.stopListening()
+                        } else {
+                            viewModel.voiceManager.startListening { spoken ->
+                                viewModel.aiProcessVoiceOrChatInput(spoken)
+                            }
+                        }
+                    } else {
+                        audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                },
+                isListening = voiceState == VoiceState.LISTENING,
+                onOpenRoundTableDebate = {
+                    showCoPilotSheet = false
+                    showAuditDebateDialog = true
+                }
             )
 
             if (showPitchPresentation) {
@@ -1640,8 +1623,8 @@ fun MindMapScreen(
                     report = auditReport,
                     currentSpeaker = currentAuditingSpeaker,
                     onDismiss = { showAuditDebateDialog = false },
-                    onStartDebate = { rounds, enableVoice ->
-                        viewModel.startAuditDebate(rounds, enableVoice)
+                    onStartDebate = { rounds, enableVoice, customTopic ->
+                        viewModel.startAuditDebate(rounds, enableVoice, customTopic)
                     },
                     onStopDebate = {
                         viewModel.stopAuditDebate()

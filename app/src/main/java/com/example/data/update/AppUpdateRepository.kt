@@ -124,7 +124,12 @@ class AppUpdateRepository(
                 )
             )
         } catch (e: Exception) {
-            Log.e("AppUpdateRepository", "Error checking for updates", e)
+            val msg = e.message ?: ""
+            if (msg.contains("404")) {
+                Log.d("AppUpdateRepository", "GitHub repozitář zatím nemá publikované releases (404 Not Found)")
+            } else {
+                Log.w("AppUpdateRepository", "Kontrola aktualizací: ${e.localizedMessage}")
+            }
             Result.failure(e)
         }
     }

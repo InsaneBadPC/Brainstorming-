@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -69,6 +70,7 @@ import com.example.ui.theme.NeonEmerald
 import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.SlateCard
 import com.example.ui.theme.SlateCardElevated
+import com.example.ui.theme.TechBorder
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
@@ -96,7 +98,10 @@ fun BrainstormCoPilotSheet(
     onSendMessage: (String) -> Unit,
     onQuickAction: (String) -> Unit,
     onSpeakMessage: (String, AiPersona?) -> Unit,
-    onGenerateBlueprint: () -> Unit
+    onGenerateBlueprint: () -> Unit,
+    onToggleVoiceMode: (() -> Unit)? = null,
+    isListening: Boolean = false,
+    onOpenRoundTableDebate: (() -> Unit)? = null
 ) {
     if (!isOpen) return
 
@@ -106,7 +111,7 @@ fun BrainstormCoPilotSheet(
     var inputText by remember { mutableStateOf("") }
 
     val quickPrompts = listOf(
-        "⚡ Zahájit debatu 3 AI o tomhle",
+        "🌟 Zahájit debatu 3 AI u Kulatého stolu",
         "✨ Nova: Navrhni 3 revoluční funkce",
         "🛡️ Vortex: Kde je v tomhle past a riziko?",
         "🏛️ Atlas: Vytvoř procesní diagram",
@@ -238,7 +243,13 @@ fun BrainstormCoPilotSheet(
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(SlateCardElevated)
                                     .border(1.dp, NeonPurple.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
-                                    .clickable { onQuickAction(prompt) }
+                                    .clickable {
+                                        if (prompt.contains("Kulatého stolu") && onOpenRoundTableDebate != null) {
+                                            onOpenRoundTableDebate()
+                                        } else {
+                                            onQuickAction(prompt)
+                                        }
+                                    }
                                     .padding(horizontal = 10.dp, vertical = 5.dp)
                                     .testTag("chip_prompt")
                             ) {
@@ -458,6 +469,25 @@ fun BrainstormCoPilotSheet(
 
                         Spacer(modifier = Modifier.width(8.dp))
 
+                        // Voice Mode Toggle Button (Text chat is default, click to switch to voice)
+                        IconButton(
+                            onClick = { onToggleVoiceMode?.invoke() },
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(if (isListening) NeonCyan.copy(alpha = 0.25f) else SlateCardElevated, CircleShape)
+                                .border(1.dp, if (isListening) NeonCyan else TechBorder, CircleShape)
+                                .testTag("btn_copilot_voice_mode")
+                        ) {
+                            Icon(
+                                imageVector = if (isListening) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.Mic,
+                                contentDescription = if (isListening) "Poslouchám..." else "Přepnout do hlasového režimu",
+                                tint = if (isListening) NeonCyan else TextSecondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
                         IconButton(
                             onClick = {
                                 if (inputText.isNotBlank() && !isProcessing) {
@@ -468,7 +498,7 @@ fun BrainstormCoPilotSheet(
                             },
                             enabled = inputText.isNotBlank() && !isProcessing,
                             modifier = Modifier
-                                .size(46.dp)
+                                .size(44.dp)
                                 .background(if (inputText.isNotBlank()) (selectedPersona?.color ?: NeonCyan) else SlateCardElevated, CircleShape)
                                 .testTag("btn_send_ai_message")
                         ) {
