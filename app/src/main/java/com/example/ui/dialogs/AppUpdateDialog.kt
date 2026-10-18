@@ -237,7 +237,7 @@ fun AppUpdateDialog(
                                 value = inputRepoSlug,
                                 onValueChange = { inputRepoSlug = it },
                                 label = { Text("Repozitář (Vlastník/Název)", fontSize = 11.sp) },
-                                placeholder = { Text("např. InsaneBadPC/Craftmind", fontSize = 11.sp) },
+                                placeholder = { Text("např. InsaneBadPC/Brainstorming-", fontSize = 11.sp) },
                                 singleLine = true,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = NeonCyan,

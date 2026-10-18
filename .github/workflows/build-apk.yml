@@ -67,11 +67,12 @@ jobs:
           GEMINI_API_KEY_SECRET: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_SERVICES_SECRET: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          # 1. Environment secrets (.env)
-          if [ -f .env.example ]; then
+          # 1. Environment secrets (.env and .env.example required by secrets plugin)
+          if [ ! -f .env.example ]; then
+            echo "GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE" > .env.example
+          fi
+          if [ ! -f .env ]; then
             cp .env.example .env
-          else
-            touch .env
           fi
           
           if [ -n "$GEMINI_API_KEY_SECRET" ]; then

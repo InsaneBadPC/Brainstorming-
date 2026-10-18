@@ -11,7 +11,7 @@ data class AppUpdateInfo(
     val apkFileName: String = "",
     val apkSizeMb: Double? = null,
     val releaseHtmlUrl: String = "",
-    val repoSlug: String = "InsaneBadPC/Craftmind",
+    val repoSlug: String = "InsaneBadPC/Brainstorming-",
     val errorMessage: String? = null,
     val isChecking: Boolean = false,
     val checkTimestamp: Long = System.currentTimeMillis()

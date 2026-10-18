@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "575521619448",
+    "project_id": "exalted-skein-505810-u3",
+    "storage_bucket": "exalted-skein-505810-u3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:575521619448:android:ad44b68cf007c26480ea0d",
+        "android_client_info": {
+          "package_name": "com.aistudio.mindcraft.lelqfs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "575521619448-q8chu195c6qntio8s3hkn9f4rchss77n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.mindcraft.lelqfs",
+            "certificate_hash": "8f4ce3881c0a51719f376cc67bcab799e899cdff"
+          }
+        },
+        {
+          "client_id": "575521619448-5m3v2ta89qknfijt5ljrqanl554nm064.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2GomsMyu-_Y6ine5pBiaTePNfvzdSBfM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "575521619448-5m3v2ta89qknfijt5ljrqanl554nm064.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

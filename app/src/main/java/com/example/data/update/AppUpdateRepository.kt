@@ -23,7 +23,7 @@ class AppUpdateRepository(
     private val prefs = context?.getSharedPreferences("craftmind_update_prefs", Context.MODE_PRIVATE)
 
     var repoSlug: String
-        get() = prefs?.getString("github_repo_slug", "InsaneBadPC/Craftmind") ?: "InsaneBadPC/Craftmind"
+        get() = prefs?.getString("github_repo_slug", "InsaneBadPC/Brainstorming-") ?: "InsaneBadPC/Brainstorming-"
         set(value) {
             prefs?.edit()?.putString("github_repo_slug", value.trim())?.apply()
         }
@@ -35,7 +35,7 @@ class AppUpdateRepository(
         }
 
     suspend fun checkLatestRelease(): Result<AppUpdateInfo> = withContext(Dispatchers.IO) {
-        val currentSlug = repoSlug.ifBlank { "InsaneBadPC/Craftmind" }
+        val currentSlug = repoSlug.ifBlank { "InsaneBadPC/Brainstorming-" }
         val token = githubToken.trim()
 
         try {

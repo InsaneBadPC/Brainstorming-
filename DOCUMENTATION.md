@@ -138,7 +138,7 @@ V horní liště lze jedním klepnutím přepínat mezi 3 perspektivami:
 - **Live Cloud Run URL:**
   `https://ais-dev-c6bgj6btma22wrfphuygha-670500173981.europe-west1.run.app`
 - **GitHub Pages nasazení:**
-  Automatizováno přes GitHub Actions (`.github/workflows/deploy-webapp.yml`) do větve `gh-pages` na `https://insanebadpc.github.io/Craftmind/`.
+  Automatizováno přes GitHub Actions (`.github/workflows/deploy-webapp.yml`) do větve `gh-pages` na `https://insanebadpc.github.io/Brainstorming-/`.
 - **Funkce webové aplikace:**
   - Vykreslování interaktivních uzlů s kategoriemi a barevnými schématy.
   - Přidávání, editace a mazání uzlů přímo na počítači myší a klávesnicí.
