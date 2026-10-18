@@ -118,19 +118,17 @@ jobs:
           echo "google-services.json status:"
           ls -lh app/google-services.json
 
-          # 3. Android Debug Keystore
+          # 3. Android Debug Keystore (persistent signing key for in-app updates)
+          if [ -f debug.keystore.base64 ]; then
+            echo "Decoding permanent debug.keystore from base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+          fi
           if [ ! -f debug.keystore ] || [ ! -s debug.keystore ]; then
-            if [ -f debug.keystore.base64 ]; then
-              echo "Decoding debug.keystore from base64..."
-              base64 -d debug.keystore.base64 > debug.keystore || true
-            fi
-            if [ ! -f debug.keystore ] || [ ! -s debug.keystore ]; then
-              echo "Generating fresh debug.keystore via keytool..."
-              keytool -genkey -v -keystore debug.keystore \
-                -storepass android -alias androiddebugkey -keypass android \
-                -keyalg RSA -keysize 2048 -validity 10000 \
-                -dname "CN=Android Debug,O=Android,C=US"
-            fi
+            echo "Warning: Generating fallback debug.keystore via keytool..."
+            keytool -genkey -v -keystore debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
           fi
           echo "debug.keystore status:"
           ls -lh debug.keystore

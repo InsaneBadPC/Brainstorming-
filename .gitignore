@@ -25,6 +25,9 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+*.keystore
+*.jks
+!debug.keystore.base64
 
 # Platform-managed agentplat state
 /.plugins/
