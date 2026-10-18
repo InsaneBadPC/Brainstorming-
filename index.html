@@ -884,7 +884,23 @@
         </div>
 
         <div class="header-nav-actions">
-            <button class="nav-link" id="btn-login-link">Přihlásit se</button>
+            <!-- Cloud sync status badge -->
+            <div id="cloud-sync-status-badge" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 5px 12px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.06); border: 1px solid var(--border-framer); color: var(--text-secondary); cursor: pointer;" title="Stav synchronizace s Cloudem">
+                <span id="cloud-sync-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span>
+                <span id="cloud-sync-text">Lokální režim</span>
+            </div>
+
+            <!-- Login / Profile controls -->
+            <button class="nav-link" id="btn-login-link" style="display: inline-flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">login</span>
+                <span>Přihlásit se</span>
+            </button>
+            <div id="user-profile-menu" style="display: none; align-items: center; gap: 8px;">
+                <img id="user-avatar" src="" style="width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border-blue); object-fit: cover;" alt="Avatar" />
+                <span id="user-name-display" style="font-size: 12px; font-weight: 600; color: var(--text-pure); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                <button class="nav-link" id="btn-logout-link" style="color: var(--framer-coral); font-size: 12px; padding: 4px 8px;" title="Odhlásit se z Cloudu">Odhlásit</button>
+            </div>
+
             <button class="btn-white-pill" id="btn-header-cta">
                 <span>Začněte zdarma</span>
             </button>
@@ -1102,6 +1118,43 @@
             { id: "n4", parentId: "n2", category: "RISK", title: "Optimalizace latence a offline", details: "Plná lokální persistence s okamžitou odezvou i bez připojení k síti", xPos: 760, yPos: 220, colorHex: "#FF4757" }
         ];
 
+        // Firebase Configuration & Named Firestore
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2GomsMyu-_Y6ine5pBiaTePNfvzdSBfM",
+            authDomain: "exalted-skein-505810-u3.firebaseapp.com",
+            projectId: "exalted-skein-505810-u3",
+            storageBucket: "exalted-skein-505810-u3.firebasestorage.app",
+            messagingSenderId: "575521619448",
+            appId: "1:575521619448:web:ad44b68cf007c26480ea0d"
+        };
+
+        const FIRESTORE_DATABASE_ID = "ai-studio-android-mindcraf-aea549fd-4bc6-4eed-b433-f2202e4497a2";
+
+        let auth = null;
+        let db = null;
+        let currentUser = null;
+        let currentMapId = "web_default_map";
+        let isSyncingToCloud = false;
+        let isReceivingCloudUpdate = false;
+        let unsubscribeLiveSync = null;
+        let cloudSyncDebounce = null;
+
+        try {
+            if (typeof firebase !== 'undefined') {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                auth = firebase.auth();
+                try {
+                    db = firebase.app().firestore(FIRESTORE_DATABASE_ID);
+                } catch (e) {
+                    db = firebase.firestore();
+                }
+            }
+        } catch (err) {
+            console.warn("[MindCraft] Firebase setup notice:", err);
+        }
+
         let nodes = [];
         let selectedNodeId = null;
         let scale = 1.0;
@@ -1120,6 +1173,181 @@
         const inspector = document.getElementById('inspector');
         const statusText = document.getElementById('canvas-status-text');
 
+        function setSyncBadge(state, label) {
+            const dot = document.getElementById('cloud-sync-dot');
+            const text = document.getElementById('cloud-sync-text');
+            const statusTextEl = document.getElementById('canvas-status-text');
+
+            if (dot && text) {
+                text.innerText = label;
+                if (state === "online") {
+                    dot.style.background = "#00E676";
+                } else if (state === "syncing" || state === "connecting") {
+                    dot.style.background = "#3B82F6";
+                } else if (state === "error") {
+                    dot.style.background = "#FF4757";
+                } else {
+                    dot.style.background = "#F59E0B";
+                }
+            }
+            if (statusTextEl) {
+                statusTextEl.innerText = label;
+            }
+        }
+
+        function updateAuthUI() {
+            const btnLogin = document.getElementById('btn-login-link');
+            const profileMenu = document.getElementById('user-profile-menu');
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name-display');
+
+            if (!btnLogin || !profileMenu) return;
+
+            if (currentUser) {
+                btnLogin.style.display = 'none';
+                profileMenu.style.display = 'inline-flex';
+                const displayName = currentUser.displayName || (currentUser.isAnonymous ? "Anonymní uživatel" : (currentUser.email || "Uživatel"));
+                if (userName) userName.innerText = displayName;
+                if (userAvatar) {
+                    userAvatar.src = currentUser.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUser.uid}`;
+                }
+            } else {
+                btnLogin.style.display = 'inline-flex';
+                profileMenu.style.display = 'none';
+            }
+        }
+
+        async function initCloudSync(userId) {
+            if (!db) return;
+            try {
+                const userDocRef = db.collection("users").doc(userId);
+                await userDocRef.set({
+                    uid: userId,
+                    displayName: currentUser.displayName || (currentUser.isAnonymous ? "Anonymní uživatel" : "Uživatel"),
+                    email: currentUser.email || "",
+                    photoUrl: currentUser.photoURL || "",
+                    updatedAt: Date.now()
+                }, { merge: true });
+
+                const mapsSnapshot = await userDocRef.collection("mind_maps").limit(1).get();
+                if (mapsSnapshot.empty) {
+                    currentMapId = "map_" + Date.now();
+                    await userDocRef.collection("mind_maps").doc(currentMapId).set({
+                        id: currentMapId,
+                        userId: userId,
+                        title: "Váš další nápad začíná zde",
+                        description: "Synchronizováno s Cloudem",
+                        seedPrompt: "",
+                        createdAt: Date.now(),
+                        updatedAt: Date.now()
+                    });
+                    await syncAllNodesToFirestore();
+                } else {
+                    currentMapId = mapsSnapshot.docs[0].id;
+                    const mapTitle = mapsSnapshot.docs[0].data().title;
+                    if (mapTitle) {
+                        const lbl = document.getElementById('active-map-label');
+                        if (lbl) lbl.innerText = mapTitle;
+                    }
+                }
+
+                if (unsubscribeLiveSync) unsubscribeLiveSync();
+                unsubscribeLiveSync = userDocRef.collection("mind_maps").doc(currentMapId)
+                    .collection("nodes").onSnapshot((snapshot) => {
+                        if (isSyncingToCloud) return;
+                        if (!snapshot.empty) {
+                            const cloudNodes = [];
+                            snapshot.forEach(doc => {
+                                const d = doc.data();
+                                cloudNodes.push({
+                                    id: d.id || doc.id,
+                                    parentId: d.parentId || null,
+                                    category: d.category || "GOAL",
+                                    title: d.title || "Bez názvu",
+                                    details: d.details || "",
+                                    xPos: typeof d.xPos === 'number' ? d.xPos : 100,
+                                    yPos: typeof d.yPos === 'number' ? d.yPos : 100,
+                                    colorHex: d.colorHex || (CATEGORIES[d.category] ? CATEGORIES[d.category].color : "#3B82F6"),
+                                    isAiGenerated: !!d.isAiGenerated,
+                                    authorPersona: d.authorPersona || null,
+                                    diagramData: d.diagramData || null
+                                });
+                            });
+                            isReceivingCloudUpdate = true;
+                            nodes = cloudNodes;
+                            saveLocalNodes();
+                            renderNodes();
+                            isReceivingCloudUpdate = false;
+                            setSyncBadge("online", "🟢 Cloud Live Sync aktivní");
+                        }
+                    }, (err) => {
+                        console.warn("[Firestore] Listener error:", err);
+                        setSyncBadge("error", "Chyba Cloud listeneru");
+                    });
+
+                setSyncBadge("online", "🟢 Cloud Live Sync aktivní");
+            } catch (err) {
+                console.warn("[Firestore] Init map error:", err);
+                setSyncBadge("error", "Chyba Cloud databáze");
+            }
+        }
+
+        async function syncAllNodesToFirestore() {
+            if (!currentUser || !db || !currentMapId) return;
+            isSyncingToCloud = true;
+            try {
+                const userMapRef = db.collection("users").doc(currentUser.uid).collection("mind_maps").doc(currentMapId);
+                const nodesCol = userMapRef.collection("nodes");
+                const batch = db.batch();
+
+                nodes.forEach(node => {
+                    const docRef = nodesCol.doc(node.id);
+                    batch.set(docRef, {
+                        id: node.id,
+                        mapId: currentMapId,
+                        parentId: node.parentId || "",
+                        title: node.title,
+                        details: node.details || "",
+                        category: node.category,
+                        xPos: node.xPos,
+                        yPos: node.yPos,
+                        colorHex: node.colorHex || (CATEGORIES[node.category] ? CATEGORIES[node.category].color : "#3B82F6"),
+                        isAiGenerated: !!node.isAiGenerated,
+                        authorPersona: node.authorPersona || "",
+                        diagramData: node.diagramData || "",
+                        isCompleted: false,
+                        isExpanded: true
+                    }, { merge: true });
+                });
+
+                await batch.commit();
+                await userMapRef.set({ updatedAt: Date.now() }, { merge: true });
+                setSyncBadge("online", "🟢 Uloženo v Cloudu");
+            } catch (err) {
+                console.warn("[Firestore] Sync failed:", err);
+                setSyncBadge("error", "Chyba zápisu do Cloudu");
+            } finally {
+                setTimeout(() => { isSyncingToCloud = false; }, 300);
+            }
+        }
+
+        function saveLocalNodes() {
+            try {
+                localStorage.setItem('mindcraft_framer_nodes_v2', JSON.stringify(nodes));
+            } catch (e) {}
+        }
+
+        function saveNodes() {
+            saveLocalNodes();
+            if (currentUser && db && !isReceivingCloudUpdate) {
+                setSyncBadge("syncing", "Ukládání do Cloudu...");
+                if (cloudSyncDebounce) clearTimeout(cloudSyncDebounce);
+                cloudSyncDebounce = setTimeout(() => {
+                    syncAllNodesToFirestore();
+                }, 500);
+            }
+        }
+
         function init() {
             try {
                 const saved = localStorage.getItem('mindcraft_framer_nodes_v2');
@@ -1129,12 +1357,23 @@
             }
             renderNodes();
             updateTransform();
-        }
 
-        function saveNodes() {
-            try {
-                localStorage.setItem('mindcraft_framer_nodes_v2', JSON.stringify(nodes));
-            } catch (e) {}
+            if (auth) {
+                auth.onAuthStateChanged((user) => {
+                    currentUser = user;
+                    updateAuthUI();
+                    if (user) {
+                        setSyncBadge("connecting", "Připojování ke Cloudu...");
+                        initCloudSync(user.uid);
+                    } else {
+                        if (unsubscribeLiveSync) {
+                            unsubscribeLiveSync();
+                            unsubscribeLiveSync = null;
+                        }
+                        setSyncBadge("offline", "🟡 Lokální režim");
+                    }
+                });
+            }
         }
 
         function updateTransform() {
@@ -1566,6 +1805,51 @@
 
         function escapeHtml(str) {
             return (str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+        }
+
+        // Login & Logout Handlers
+        const btnLoginLink = document.getElementById('btn-login-link');
+        if (btnLoginLink) {
+            btnLoginLink.onclick = async () => {
+                if (!auth) {
+                    alert("Firebase SDK není dostupné.");
+                    return;
+                }
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    await auth.signInWithPopup(provider);
+                } catch (err) {
+                    console.warn("[Auth] Popup sign-in notice:", err);
+                    const useAnon = confirm("Přihlášení přes Google vyskakovací okno bylo zablokováno prohlížečem nebo není na této doméně povoleno. Chcete se přihlásit s cloudovým účtem a otestovat okamžitou synchronizaci s mobilem?");
+                    if (useAnon) {
+                        try {
+                            await auth.signInAnonymously();
+                        } catch (anonErr) {
+                            alert("Přihlášení se nezdařilo: " + (anonErr.message || anonErr));
+                        }
+                    }
+                }
+            };
+        }
+
+        const btnLogoutLink = document.getElementById('btn-logout-link');
+        if (btnLogoutLink) {
+            btnLogoutLink.onclick = async () => {
+                if (auth) {
+                    await auth.signOut();
+                }
+            };
+        }
+
+        const syncBadge = document.getElementById('cloud-sync-status-badge');
+        if (syncBadge) {
+            syncBadge.onclick = () => {
+                if (!currentUser) {
+                    if (btnLoginLink) btnLoginLink.click();
+                } else {
+                    syncAllNodesToFirestore();
+                }
+            };
         }
 
         init();
